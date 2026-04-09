@@ -1,0 +1,224 @@
+(defun area_rectangulo (base altura)
+  (* base altura))
+
+(defun area_cuandrado (lado)
+  (* lado lado))
+
+(defun sumar_listas (l1 l2)
+  (mapcar '+ l1 l2))
+
+(defun sumar_matrices (matriz1 matriz2)
+  (mapcar 'sumar_listas matriz1 matriz2))
+
+(defun cociente_resto (numero1 numero2)
+  (list (floor numero1 numero2)
+	(- numero1 (* numero2 (floor numero1 numero2)))))
+
+(defun sumar_matrices_version_lambda (matriz1 matriz2)
+  (mapcar (lambda (m1 m2)
+            (mapcar '+ m1 m2))   
+	  matriz1 matriz2))
+
+(defun num_posicion (lista pos)
+  (append
+   (list (car (append
+               (butlast lista (- (length lista) pos))
+               (cdr (nthcdr pos lista)))))
+   (list (cadr (append
+		(butlast lista (- (length lista) pos))
+		(cdr (nthcdr pos lista)))))
+   (append (list (nth pos lista)) (nthcdr 2 (append
+					     (butlast lista (- (length lista) pos))
+					     (cdr (nthcdr pos lista)))))))
+
+(defun pasa-1-a-3 (lista)
+  (append (list (nth 1 lista) (nth 2 lista) (nth 0 lista)) (cdddr lista)))
+
+; revisar - no funciona - pasar el elemento 1 al la posicion n
+(defun pasa1-a-n (lista n)
+  (append
+   (reverse (nthcdr (- (length lista) n) (reverse (cdr lista))))
+   (list (nth 0 lista))
+   (nthcdr n lista)))
+
+; dame_elementos_entre_n_m - dar los elementos que se encuentran entre dos posiciones de una lista
+(defun elementos_entre_n_m (n m lista)
+  (reverse (cdr (reverse (cdr (reverse (member m (reverse (member n lista)))))))))
+
+(defun elementos_entre_n_m_2 (n m lista)
+  (reverse (member m (reverse (member n lista)))))
+
+(defun cuadrado_numero (numero)
+  (* numero numero))
+
+(defun num_posicion_2 (pos lista)
+  (setf (nth pos lista) (nth 0 lista))
+  lista)
+
+(defun traspuesta_matriz (m)
+  (eval 
+   (append '(mapcar 'list)
+	   (mapcar (lambda (v) (list 'quote v))
+		   m))))
+
+(defun multiplicar_listas (l1 l2)
+  (mapcar '* l1 l2))
+
+(defun multiplicar_matriz (m1 m2)
+  (mapcar 'multiplicar_listas m1 (traspuesta_matriz m2)))
+
+; una lista si tiene mas de 10 elementos decir 'esta lista es muy larga'
+(defun comprobar_lista (lista)
+  (if (> (length lista) 10)
+      '(esta lista es muy larga)
+      '(ok)))
+
+
+; tenemos una lista '(A B C D E F) y queremos devolverla así ((a b c)(b c d)(c d e)(d e f))
+(defun dividir_lista (lista)
+  (mapcar (lambda (x y z) (list x y z)) lista (cdr lista) (cdr (cdr lista))))
+
+(defun dividir_lista_2 (lista)
+  (mapcar 'list lista (cdr lista) (cdr (cdr lista))))
+
+
+(defun producto_escalar (matriz k)
+  (mapcar (lambda (fila) 
+	    (mapcar (lambda (x) (* k x)) fila)) 
+	  matriz))
+
+(defun suma_fila_columna (matriz)
+  (list (mapcar (lambda (x) (apply '+ x)) matriz) 
+	(apply 'mapcar '+ matriz)))
+
+(defun suma_fila (matriz)
+  (mapcar (lambda (x) (apply '+ x)) 
+	  matriz))
+
+(defun suma_columna (matriz)
+  (apply 'mapcar '+ matriz))
+
+(defun producto_vector_matriz (vector matriz)
+  (mapcar (lambda (fila) (mapcar '* vector fila)) 
+	  matriz))
+
+(defun producto_punto_por_fila_con_vector (vector matriz)
+  (mapcar (lambda (x) (apply '+ x)) (mapcar (lambda (fila) (mapcar '* fila vector)) matriz)))
+
+;(mapcar 'list lista (cdr lista) (cdr (cdr lista)))
+; tenemos una lista '(A B C D E F) y queremos devolver los elementos de n en n
+
+; -----------------------------------------------------------------------------------------------------------
+; () es igual a NIL, ya que se trata de una lista vacía, así que, si queremos saber si un lista tiene elementos o no
+; podemos preguntas si tiene elementos o no, es decir, if ()
+; numberp - (if numberp v)
+; symbolp - (symbolp '()) -> T | (symbolp 'A) -> T
+; listp - (lisp lista) -> T
+; NULL - (null '()) -> T | (null 0) -> NIL
+; (and (lisp lista) (null lista))
+; (and (> a 3) (< a 10))
+; (or (eq (color 'blanco) (eq color 'negro)))
+; (equal '(a b) '(a b) -> T | (equal '(a b) '(a b c)) -> NIL)
+; (not (equal '(a b) '(a b))) -> NIL
+; cuando una funcion me va a devolver un predicado debemos nombrardo asi: funcionp
+
+(defun tipo-simple (x)
+  (if (null x)
+      'nil
+      (if (numberp x)
+	  'NUM
+          (if (symbolp x)
+              'SYM
+              (if (listp x)
+		  'list
+		  'otro)))))
+
+(defun inc-si-num (x)
+  (if (numberp x)
+      (1+ x)
+      x))
+
+(defun nil-a (x defecto)
+  (if (null x)
+      x
+      defecto))
+
+; función que incrementa 1+ si el valor contenido dentro de la lista se trata de un número
+(defun inc-numeros (lista)
+  (mapcar (lambda (x) (if (numberp x) (1+ x) x)) lista))
+
+(defun etiqueta (lista)
+  (mapcar (lambda (x) 
+      (if (numberp x)
+        (list 'NUM x)
+          (if (listp x)
+            (list 'LIST x)
+              (if (symbolp x)
+                (list 'SYM x)
+                  (if (null x)
+                    (list 'nil x)
+                    'OTRO))))) lista))
+
+; convertir números negativos a 0 dentro de una matriz
+(defun negativos-a-cero (matriz)
+  (mapcar (lambda (fila) 
+    (mapcar (lambda (x) 
+      (if (< x 0)
+        '0
+        x)) fila)) matriz))
+
+; suma cada numero de cada fila ignorando aquellos valores que no son números
+(defun suma-filas-ingnorando-no-num (matriz)
+  (mapcar (lambda (fila)
+    (if (null fila)
+      0
+      (apply '+ 
+        (mapcar (lambda (x)
+          (if (numberp x) x 0)) 
+        fila)))) 
+  matriz))
+
+(defun centrar-filas (matriz)
+  (mapcar (lambda (fila) 
+    (if (not (numberp (car fila)))
+      fila
+      (if (numberp (car fila))
+          (cons '0 (nthcdr 1 fila)) 
+          x)))
+  matriz))
+
+; min -> min 1 0 2 7
+; max -> max 1 0 2 7
+; (apply 'min '(1 2 0 4))
+
+(defun comparar-min-max-lista (lista)
+  (nth (- (length lista)) (length (member 'NIL (mapcar (lambda (yy)
+							 (member 'T yy))
+						       (mapcar (lambda (x)
+								 (mapcar (lambda (y)
+									   (> x y))
+									 lista))
+							       lista))))))
+
+; dado un numero y una lista, una funcion que me diga cuantas veces esta el numero en la lista
+  
+(defun fibonacci (n)
+  (if (< n 2)
+    n
+    (+ (fibonacci (- n 1)) (fibonacci (- n 2)))
+    ))
+
+; recursividad de cola
+; trace funcion
+; hacerlo recursivo - calcular la longitud de una lista sin utilizar length
+(defun longitud-lista-recursivo (lista)
+  (if (null lista)
+    0
+    (1+ (longitud-lista-recursivo (cdr lista)))))
+
+(defun longitud-lista-mapcar (lista)
+  (apply '+
+    (mapcar (lambda (x) 1)
+    lista)))
+
+; automata celular unidimensional

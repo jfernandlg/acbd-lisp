@@ -407,48 +407,81 @@
 ; AUTOMATA CELULAR UNIDIMENSIONAL
 ; ---------------------------------------------------------------------------------------------------------- 
 
+; función utilizada para convertir un número decimal a binario
+
 (defun convertir-num-binario (num)
   (if (equal num 0)
     nil
     (append (convertir-num-binario (car (list (floor num 2)))) (list (- num (* 2 (floor num 2)))))))
+
+; función utilizada para convertir el número binario que le pasamos a un número binario de 8 bits
 
 (defun binario-8bits (lista)
   (if (< (length lista) 8)
       (binario-8bits (cons 0 lista))
       lista))
 
-; calcular el estado de un vecindario
+; función utilizada para calcular el estado de un vecindario, es decir, le pasamos un vecindario de 3 bits y nos da el valor decimal
 
 (defun valor-vecindario (vecindario)
   (if (null vecindario)
     0
     (+ (* (car vecindario) (potencia 2 (1- (length vecindario)))) (valor-vecindario (cdr vecindario)))))
 
+; función utilizada para calcular la potencia, le pasamos la base y el exponente para calcular la operación
+
 (defun potencia (base exponente)
   (if (equal exponente 0)
     1
     (* base (potencia base (1- exponente)))))
+
+; función utilizada para obtener el estado de un vecindario, le pasamos un regla binaria y el vecindario y obtendremos el valor
+; de ese vecindario según la regla
 
 (defun obtener-estado-vecindario (regla vecindario)
   (if (null vecindario)
     0
     (nth (valor-vecindario vecindario) (reverse regla))))
 
+; función utilizada para construir los vecindarios de 3 bits que serán utilizados para comprobarlos con la regla binaria.
+; le pasamos una lista inicial para situarnos y construir la lista de vecindarios. 
+; debemos pasarle un indice de 0 para comience a construir desde el comienzo
+
 (defun construir-vecindarios (lista indice)
   (if (< indice (length lista))
       (cons (construir-celdas lista indice) (construir-vecindarios lista (1+ indice)))
       nil))
-    
+
+; función complementaria con la anterior, mediante el indice que se le pasa a la funcion anterior calculamos el indice anterior, central y posterior
+; según la posición concreta de este para obtener cada vecindario.
+; el calculo de los vecindarios es:
+  ; izquierda -> indice - 1 mod 8 (length lista)
+  ; cental -> indice mod 8
+  ; derecha -> indice + 1 mod 8
+; el valor obtenido de los modulos se les realiza un nth para obtener el valor de esa celda dentro de la lista
+; el módulo es 8 ya que es la longitud de la lista
+; Un ejemplo de la primera iteración es:
+  ; -1 mod 8 -> 7
+  ; 0 mod 8 -> 0
+  ; 1 mod 8 -> 1
+; los numeros obtenidos son a aquellas celdas a las que debemos realizar el nth para obtener su valor 
+
 (defun construir-celdas (lista indice)
   (list 
   (nth (- (1- indice) (* (length lista) (floor (1- indice) (length lista)))) lista)
   (nth (- indice (* (length lista) (floor indice (length lista)))) lista)
   (nth (- (1+ indice) (* (length lista) (floor (1+ indice) (length lista)))) lista)))
 
+; función utilizada para construir una sola generacion, utilizando la función construir-vecindarios donde le pasamos una lista inicial y un indice,
+; a partir de la siguiente, a la cual le pasamos el listado de vecindarios de 3 bits y una regla binaria construimos una sola generación
+
 (defun construir-generacion (regla lista)
   (if (null lista)
     nil
     (cons (obtener-estado-vecindario regla (car lista)) (construir-generacion regla (cdr lista)))))
+
+; función utilizada para construir el automata celular unicelular, a partir de la lista inicial, la regla binaria y el número de pasos
+; realizamos la ejecución pero solo se mostrarán secuencias de 0s y 1s.
 
 (defun ev_auto (lista regla pasos)
   (if (> pasos 0)
@@ -457,6 +490,8 @@
 
 ; subst '0 '_
 ; subs 1 '@
+
+; fución utilizada para mostrar el autómata celular unicelular pero intercambiando los 0s y 1s por _ y @.
 
 (defun mostrar-automata (matriz)
   (mapcar (lambda (fila)
@@ -509,8 +544,34 @@
     0
     (nth (1- (obtener-valor-vecindario-2d (valor-vecindario-2d vecindario))) (reverse regla))))
 
+(defun construir-vecindarios-2d (lista x y)
+  (if (and (< x (length lista)) (< y (length lista)))
+    ))
 
+(defun construir-celdas-acb (lista y)
+  (list
+    (list 
+      (nth (modulo (1- (nth (modulo (1- y) (length lista))))) (length lista))
+      (nth (modulo (nth (modulo (1- y) (length lista)))) (length lista))
+      (nth (modulo (1+ (nth (modulo (1- y) (length lista))))) (length lista)))
+    (list
+      (nth (modulo (1- (nth (modulo y (length lista))))) (length lista))
+      (nth (modulo (nth (modulo y (length lista)))) (length lista))
+      (nth (modulo (1+ (nth (modulo y (length lista))))) (length lista)))
+    (list
+      (nth (modulo (1- (nth (modulo (1+ y) (length lista))))) (length lista))
+      (nth (modulo (nth (modulo (1+ y) (length lista)))) (length lista))
+      (nth (modulo (1+ (nth (modulo (1+ y) (length lista))))) (length lista)))
+  ))
 
+(defun modulo (n1 n2)
+  (- n1 (* n2 (floor n1 n2))))
+
+(defun construir-celdas (lista indice)
+  (list 
+  (nth (- (1- indice) (* (length lista) (floor (1- indice) (length lista)))) lista)
+  (nth (- indice (* (length lista) (floor indice (length lista)))) lista)
+  (nth (- (1+ indice) (* (length lista) (floor (1+ indice) (length lista)))) lista)))
 ; pasar a decimal el vecindario y a partir de ahi saber que valor le pertenece dentro de la regla
 
 ; (print (make-sequence 'list 10 :initial-element 0))

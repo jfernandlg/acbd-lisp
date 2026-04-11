@@ -545,33 +545,41 @@
     (nth (1- (obtener-valor-vecindario-2d (valor-vecindario-2d vecindario))) (reverse regla))))
 
 (defun construir-vecindarios-2d (lista x y)
-  (if (and (< x (length lista)) (< y (length lista)))
-    ))
+  (if (eq x 3)
+    nil
+    (if (< y 2)
+      (cons (construir-celdas-acb (dividir-lista-recurisivo lista) x y) (construir-vecindarios-2d lista x (1+ y)))
+      (cons (construir-celdas-acb (dividir-lista-recurisivo lista) x y) (construir-vecindarios-2d lista (1+ x) 0)))))
 
-(defun construir-celdas-acb (lista y)
+(defun construir-celdas-acb (lista x y)
   (list
     (list 
-      (nth (modulo (1- (nth (modulo (1- y) (length lista))))) (length lista))
-      (nth (modulo (nth (modulo (1- y) (length lista)))) (length lista))
-      (nth (modulo (1+ (nth (modulo (1- y) (length lista))))) (length lista)))
+      (nth (modulo (1- x) (length lista)) (nth (modulo (1- y) (length lista)) lista))
+      (nth (modulo x (length lista)) (nth (modulo (1- y) (length lista)) lista))
+      (nth (modulo (1+ x) (length lista)) (nth (modulo (1- y) (length lista)) lista)))
     (list
-      (nth (modulo (1- (nth (modulo y (length lista))))) (length lista))
-      (nth (modulo (nth (modulo y (length lista)))) (length lista))
-      (nth (modulo (1+ (nth (modulo y (length lista))))) (length lista)))
+      (nth (modulo (1- x) (length lista)) (nth (modulo y (length lista)) lista))
+      (nth (modulo x (length lista)) (nth (modulo y (length lista)) lista))
+      (nth (modulo (1+ x) (length lista)) (nth (modulo y (length lista)) lista)))
     (list
-      (nth (modulo (1- (nth (modulo (1+ y) (length lista))))) (length lista))
-      (nth (modulo (nth (modulo (1+ y) (length lista)))) (length lista))
-      (nth (modulo (1+ (nth (modulo (1+ y) (length lista))))) (length lista)))
+      (nth (modulo (1- x) (length lista)) (nth (modulo (1+ y) (length lista)) lista))
+      (nth (modulo x (length lista)) (nth (modulo (1+ y) (length lista)) lista))
+      (nth (modulo (1+ x) (length lista)) (nth (modulo (1+ y) (length lista)) lista)))
   ))
+
+
+
 
 (defun modulo (n1 n2)
   (- n1 (* n2 (floor n1 n2))))
 
-(defun construir-celdas (lista indice)
-  (list 
-  (nth (- (1- indice) (* (length lista) (floor (1- indice) (length lista)))) lista)
-  (nth (- indice (* (length lista) (floor indice (length lista)))) lista)
-  (nth (- (1+ indice) (* (length lista) (floor (1+ indice) (length lista)))) lista)))
+(defun dividir-lista-recurisivo (lista)
+  (if (null lista)
+    nil
+    (if (atom (car lista))
+      (cons (list (car lista) (cadr lista) (caddr lista)) (dividir-lista-recurisivo (cdr (cdr (cdr lista)))))
+      nil)))
+
 ; pasar a decimal el vecindario y a partir de ahi saber que valor le pertenece dentro de la regla
 
 ; (print (make-sequence 'list 10 :initial-element 0))

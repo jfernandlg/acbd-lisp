@@ -518,38 +518,58 @@
         '0
         x)) fila)) matriz))
 
-
+; función parfa convertir un número decimal en binario
 (defun convertir-num-binario-acb (num)
   (if (equal num 0)
     nil
     (append (convertir-num-binario-acb (car (list (floor num 2)))) (list (- num (* 2 (floor num 2)))))))
 
+; función para convertir en número binario en un binario de 9 bits
 (defun binario-9bits (lista)
   (if (< (length lista) 9)
       (binario-9bits (cons 0 lista))
       lista))
 
+; función que al pasarle un vecindario, por ejemplo, ((1 1 1)(1 1 1)(1 1 1)) nos devuelve el valor en decimal, además, utilizamos la función aplanar
+; para que cuando le pasemos el vecindario sea más sencillo al calcular su valor
 (defun valor-vecindario-2d (vecindario)
   (if (null vecindario)
     0
     (valor-vecindario (aplanar-lista-recursivo vecindario))))
 
+; función que al pasarle un vecindario hasta el 511, nos simplifica su valor para que sea más sencillo su cálculo en las funciones posteriores
+; por ejemplo, si le pasamos un vecindario '((0 0 0)(0 0 1)(1 1 1)) cuyo valor es 15 es decimal, cuando comprobemos este valor dentro de la regla
+; será más complejo identificar a que valor se refiere, es por ello que he realizado una conversión del vecindario que según el rango en el que se encuentre
+; devolverá su posición para identificar su valor, como el valor en decimal es 15, el valor convertido sería 4. 
 (defun obtener-valor-vecindario-2d (vecindario)
   (if (equal vecindario 0)
   0
   (1+ (obtener-valor-vecindario-2d (floor vecindario 2)))))
 
+; función para obtener el estado del vecindario según su número decimal, como en la función anterior obtuvimos el valor decimal convertido, mediante la
+; siguiente fución le restamos uno a su valor y obtenemos su valor según la regla binaria
 (defun obtener-estado-vecindario-2d (regla vecindario)
   (if (null vecindario)
     0
     (nth (1- (obtener-valor-vecindario-2d (valor-vecindario-2d vecindario))) (reverse regla))))
 
+; función para construir los vecindario 3 x 3 de cada uno de los 9 bits de la lista que le pasamos, debemos recorrer la matriz para construir
+; cada fila de 3 bits, es por ello que utilizamos la función construir-celdas-acb para obtener el vecindario completo junto a la función
+; dividir-lista-recurisivo para dividir el vecindario completo en una matriz 3 x 3.
 (defun construir-vecindarios-2d (lista x y)
   (if (eq y 3)
     nil
     (if (< x 2)
       (cons (construir-celdas-acb (dividir-lista-recurisivo lista) x y) (construir-vecindarios-2d lista (1+ x) y))
       (cons (construir-celdas-acb (dividir-lista-recurisivo lista) x y) (construir-vecindarios-2d lista 0 (1+ y))))))
+
+; utilizamos esta función para obtener cada posición de los vecindario 3 x 3 de la lista, el cálculo de los vecindarios es:
+; c(0, 0) -> x - 1, y - 1   c(0, 1) -> x, y - 1   c(0, 2) -> x + 1, y - 1
+; c(1, 0) -> x - 1, y       c(1, 1) -> x, y       c(1, 2) -> x + 1, y
+; c(2, 0) -> x - 1, y + 1   c(2, 1) -> x, y + 1   c(2, 2) -> x + 1, y + 1
+
+; a cada variable se le pasa el valor posicional y se realiza el módulo, posteriormente con el valor obtenido
+; se ejecuta con la función nth para obtener su fila y columna respectiva y obtener el valor de la celda 
 
 (defun construir-celdas-acb (lista x y)
   (list
@@ -567,9 +587,11 @@
       (nth (modulo (1+ x) (length lista)) (nth (modulo (1+ y) (length lista)) lista)))
   ))
 
+; función utilizada para calcular el módulo
 (defun modulo (n1 n2)
   (- n1 (* n2 (floor n1 n2))))
 
+; función utilizada para dividir una función en tres sublistas, es decir, una matriz 3 x 3
 (defun dividir-lista-recurisivo (lista)
   (if (null lista)
     nil
@@ -577,18 +599,22 @@
       (cons (list (car lista) (cadr lista) (caddr lista)) (dividir-lista-recurisivo (cdr (cdr (cdr lista)))))
       nil)))
 
+; función utilizada para construir una sola generacion, utilizando la función construir-vecindarios-2d donde le pasamos una lista inicial y el
+; indice x e y, y a partir de la siguiente, a la cual le pasamos el listado de vecindarios de 3 bits y una regla binaria construimos una sola generación
 (defun construir-generacion-2d (regla lista)
   (if (null lista)
     nil
     (cons (obtener-estado-vecindario-2d regla (car lista)) (construir-generacion-2d regla (cdr lista)))))
 
+; función utilizada para construir el automata celular bidimensional, a partir de la lista inicial, la regla binaria y el número de pasos
+; realizamos la ejecución pero solo se mostrarán secuencias de 0s y 1s en matrices de 3 x 3.
 (defun ev_auto-2d (lista regla pasos)
   (if (> pasos 0)
     (cons (dividir-lista-recurisivo (construir-generacion-2d regla (construir-vecindarios-2d lista 0 0))) 
     (ev_auto-2d (construir-generacion-2d regla (construir-vecindarios-2d lista 0 0)) regla (1- pasos)))
     nil))
 
-
+; fución utilizada para mostrar el autómata celular bidimensional pero intercambiando los 0s y 1s por _ y @.
 (defun mostrar-automata-2d (matriz)
   (mapcar (lambda (fila)
     (mapcar (lambda (columna)

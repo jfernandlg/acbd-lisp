@@ -501,8 +501,45 @@
     fila))
   matriz))
 
+; append (last (list car))
+
 ;----------------------------------------------------------------------------------------------------------
 ;----------------------------------------------------------------------------------------------------------
+
+
+; función para construir los vecindario 3 x 3 de cada uno de los 9 bits de la lista que le pasamos, debemos recorrer la matriz para construir
+; cada fila de 3 bits, es por ello que utilizamos la función construir-celdas-acb para obtener el vecindario completo junto a la función
+; dividir-lista-recurisivo para dividir el vecindario completo en una matriz 3 x 3.
+(defun construir-vecindarios-2d-pers (lista x y)
+(let* ((dimensiones (tam-tablero (obtener-tams-tablero lista 1)))
+      (ancho (car dimensiones))
+      (alto (cadr dimensiones))
+      (matriz (dividir-lista-recurisivo lista ancho)))
+
+      (if (eq y alto)
+        nil
+        (if (< x (1- ancho))
+          (cons (construir-celdas-acb (dividir-lista-recursivo lista ancho) x y) (construir-vecindarios-2d lista (1+ x) y))
+          (cons (construir-celdas-acb (dividir-lista-recursivo lista ancho) x y) (construir-vecindarios-2d lista 0 (1+ y)))))))
+
+
+
+(defun construir-celdas-acb (matriz x y ancho alto)
+  (list
+    (list 
+      (nth (modulo (1- x) ancho) (nth (modulo (1- y) alto) matriz))
+      (nth (modulo x ancho) (nth (modulo (1- y) alto) matriz))
+      (nth (modulo (1+ x) ancho) (nth (modulo (1- y) alto) matriz)))
+    (list
+      (nth (modulo (1- x) ancho) (nth (modulo y alto) matriz))
+      (nth (modulo x ancho) (nth (modulo y alto) matriz))
+      (nth (modulo (1+ x) ancho) (nth (modulo y alto) matriz)))
+    (list
+      (nth (modulo (1- x) ancho) (nth (modulo (1+ y) alto) matriz))
+      (nth (modulo x ancho) (nth (modulo (1+ y) alto) matriz))
+      (nth (modulo (1+ x) ancho) (nth (modulo (1+ y) alto) matriz)))
+  ))
+
 
 ; (cons (ev_auto (construir-generacion regla (construir-vecindarios lista 0)) regla (1- pasos)))
 ; nth (- (1- indice) (* (length lista) (floor (1- indice) (length lista)))) lista
@@ -538,30 +575,247 @@
     (valor-vecindario (aplanar-lista-recursivo vecindario))))
 
 ; función que al pasarle un vecindario hasta el 511, nos simplifica su valor para que sea más sencillo su cálculo en las funciones posteriores
-; por ejemplo, si le pasamos un vecindario '((0 0 0)(0 0 1)(1 1 1)) cuyo valor es 15 es decimal, cuando comprobemos este valor dentro de la regla
+; por ejemplo, si le pasamos un vecindario '((0 0 0)(0 0 1)(1 1 1)) cuyo valor es 15 en decimal, cuando comprobemos este valor dentro de la regla
 ; será más complejo identificar a que valor se refiere, es por ello que he realizado una conversión del vecindario que según el rango en el que se encuentre
 ; devolverá su posición para identificar su valor, como el valor en decimal es 15, el valor convertido sería 4. 
 (defun obtener-valor-vecindario-2d (vecindario)
   (if (equal vecindario 0)
-  0
-  (1+ (obtener-valor-vecindario-2d (floor vecindario 2)))))
+    0
+    (if (equal vecindario 1)
+      1
+      (1+ (obtener-valor-vecindario-2d (floor vecindario 2))))))
 
-; función para obtener el estado del vecindario según su número decimal, como en la función anterior obtuvimos el valor decimal convertido, mediante la
-; siguiente fución le restamos uno a su valor y obtenemos su valor según la regla binaria
+; función para obtener el estado del vecindario según su número decimal, como en la función anterior obtuvimos el valor decimal convertido a su índice correspondiente, mediante la
+; siguiente fución y teniendo en cuenta la regla en binario. Es de suma importancia que una vez obtenemos el indice realicemos la resta de una unidad al indice, debido que cuando realizamos
+; el nth sobre la lista que es de longitud 9, pero sus posiciones son desde la 0 a la 8, es por ello, que al resultar un valor de indice 9, cuando realicemos el nth con ese valor de indice
+; sobre la lista revertida no nos dará ningún valor, por tanto, restamos uno menos y nos resulta el valor según el vecindario que pasamos por parámetro. 
 (defun obtener-estado-vecindario-2d (regla vecindario)
   (if (null vecindario)
     0
-    (nth (1- (obtener-valor-vecindario-2d (valor-vecindario-2d vecindario))) (reverse regla))))
+    (let ((indice (obtener-valor-vecindario-2d (valor-vecindario-2d vecindario))))
+      (if (>= (1- indice) (length regla))
+        0
+        (if (< (1- indice) 0)
+          (nth 0 (reverse regla))
+          (nth (1- indice) (reverse regla)))))))
 
-; función para construir los vecindario 3 x 3 de cada uno de los 9 bits de la lista que le pasamos, debemos recorrer la matriz para construir
-; cada fila de 3 bits, es por ello que utilizamos la función construir-celdas-acb para obtener el vecindario completo junto a la función
-; dividir-lista-recurisivo para dividir el vecindario completo en una matriz 3 x 3.
+; función para construir los vecindarios según la lista que le pasamos, para construir los vecindarios necesitamos dos indice x e y, ambos a 0, y por otro lado, en caso de utilizar
+; longitud de listas superior a 9, debemos calcular las dimensiones de lo que será nuestro nuevo vecindario
 (defun construir-vecindarios-2d (lista x y)
-  (if (eq y 3)
+  (let* ((dimensiones (tam-tablero (obtener-tams-tablero lista 1)))
+          (ancho (car dimensiones))
+          (alto (cadr dimensiones))
+          (matriz (dividir-lista-recursivo lista ancho)))
+          (construir-vecindarios-2d-aux matriz x y ancho alto)))
+
+; función auxiliar utilizada para construir los vecindarios a partir de la lista, en este caso, a partir de las dimensiones obtenidas (ancho y alto) y los indices obtenemos
+; los vecindarios construidos
+(defun construir-vecindarios-2d-aux (matriz x y ancho alto)
+  (if (equal y alto)
     nil
-    (if (< x 2)
-      (cons (construir-celdas-acb (dividir-lista-recurisivo lista) x y) (construir-vecindarios-2d lista (1+ x) y))
-      (cons (construir-celdas-acb (dividir-lista-recurisivo lista) x y) (construir-vecindarios-2d lista 0 (1+ y))))))
+    (if (< x (1- ancho))
+      (cons (construir-celdas-acb matriz x y ancho alto) (construir-vecindarios-2d-aux matriz (1+ x) y ancho alto))
+      (cons (construir-celdas-acb matriz x y ancho alto) (construir-vecindarios-2d-aux matriz 0 (1+ y) ancho alto)))))
+
+; función utilizada para obtener los divisores según la longitud de la lista, debido a que cuando le pasamos una lista de una longitud cualquiera nuestro algoritmo debe calcular
+; el tamaño de la matriz correspondiente para construir los vecindarios, por ejemplo si nuestra longitud de la lista es de 36, esta función mostrará todas aquellas conbinaciones de
+; de pares se pueden dar calculando sus divisores. La condición de parada se dará cuando el posible numero divisible se superior a la longitud de la lista. Como paso importante
+; calculamos si el tamaño de la lista es divisible por el número actual, en caso de que sea divisible es que encontró un divisor, por ejemplo, si la lista mide 9 y el número es 3
+; el par generado será de (3 3). Finalmente, en caso de que el número actual no sea divisible, aumentará en una unidad el número de manera recursiva para seguir buscando divisores.
+(defun obtener-tams-tablero (lista numero)
+  (if (> numero (length lista))
+    nil
+    (if (eq (modulo (length lista) numero) 0)
+      (cons (list numero (/ (length lista) numero)) (obtener-tams-tablero lista (1+ numero)))
+      (obtener-tams-tablero lista (1+ numero)))))
+
+; esta función es utilizada para calcular el valor absolto entre las parejas
+(defun diferencia (par)
+  (if (eq (max (car par) (cadr par)) (car par))
+      (- (car par) (cadr par))
+      (- (cadr par) (car par))))
+  
+; esta función reciba todas la combinaciones y decide cuál de todas ellas es la mejor, la función encontrará la combinación lo más cuadrada posible
+; mediante el let comparamos el par actual con el que ya haya resultado de todo el resto de la lista. Posteriormente, si la diferencia entre el ancho y el alto del par actual
+; es menor que la del "mejor" hasta ahora, el par actual gana, por ejemplo, la función preferirá un 6 x 5 que un 15 x 2. Para el desempate, si las diferencias son iguales, 
+; por ejemplo, 3 x 4 y 4 x 3, elige el que tenga un ancho más grande.
+(defun tam-tablero (lista)
+  (if (null (cdr lista))
+      (car lista)
+      (let ((mejor-par (tam-tablero (cdr lista)))
+            (par (car lista)))
+        (if (or (< (diferencia par) (diferencia mejor-par))
+                (and (= (diferencia par) (diferencia mejor-par))
+                     (> (car par) (car mejor-par))))
+            par
+            mejor-par))))
+
+
+; función para obtener el nuevo valor de la celda mediante el cálculo del módulo, para ello le debemos pasar la matriz obtenida, el alto, el ancho y sus respectivos indices
+(defun obtener-celda (matriz ancho alto x y)
+  (let ((col (modulo x ancho))
+          (fila (modulo y alto)))
+      (nth col (nth fila matriz))))
+
+; utilizamos esta función para obtener cada posición de los vecindario 3 x 3 de la lista, el cálculo de los vecindarios es:
+; c(0, 0) -> x - 1, y - 1   c(0, 1) -> x, y - 1   c(0, 2) -> x + 1, y - 1
+; c(1, 0) -> x - 1, y       c(1, 1) -> x, y       c(1, 2) -> x + 1, y
+; c(2, 0) -> x - 1, y + 1   c(2, 1) -> x, y + 1   c(2, 2) -> x + 1, y + 1
+
+; a cada variable se le pasa el valor posicional y se realiza el módulo, posteriormente con el valor obtenido
+; se ejecuta con la función nth para obtener su fila y columna respectiva y obtener el valor de la celda 
+
+(defun construir-celdas-acb (matriz x y ancho alto)
+  (list
+    (list 
+      (obtener-celda matriz ancho alto (1- x) (1- y))
+      (obtener-celda matriz ancho alto x (1- y))
+      (obtener-celda matriz ancho alto (1+ x) (1- y)))
+    (list
+      (obtener-celda matriz ancho alto (1- x) y)
+      (obtener-celda matriz ancho alto x y)
+      (obtener-celda matriz ancho alto (1+ x) y))
+    (list
+      (obtener-celda matriz ancho alto (1- x) (1+ y))
+      (obtener-celda matriz ancho alto x (1+ y))
+      (obtener-celda matriz ancho alto (1+ x) (1+ y)))
+  ))
+
+; función utilizada para calcular el módulo
+(defun modulo (n1 n2)
+  (let ((resultado (- n1 (* n2 (floor n1 n2)))))
+    (if (< resultado 0)
+      (+ resultado n2)
+        resultado)))
+
+; función encargada de seleccionar n elementos, debido a que el algoritmo está diseñados para calcular el tamaño necesario para los vecindarios
+; esta función ayuda a seleccionar el número de elementos necesarios para pasarlos a una nueva lista
+(defun seleccionar-n (n lista)
+  (if (or (null lista) (<= n 0))
+    nil
+    (cons (car lista) (seleccionar-n (1- n) (cdr lista)))))
+
+; esta función se compagina con la anterior, pero hace lo contrario, salta n elementos para continuar seleccionando los elementos y poder realizar la división
+(defun saltar-n (n lista)
+  (if (or (null lista) (<= n 0))
+    lista
+    (saltar-n (1- n) (cdr lista))))
+
+; función utilizada para dividir una función en n sublistas, para ello, utilizando las dos funciones anteriores, primero selecciona los n elementos que especifique el ancho de la matriz
+; y posteriormente salta los n elementos para econtrar donde empieza la siguiente información de la lista para poder extraer la información de los siguientes elementos
+(defun dividir-lista-recursivo (lista ancho)
+  (if (null lista)
+    nil
+    (cons (seleccionar-n ancho lista)
+      (dividir-lista-recursivo (saltar-n ancho lista) ancho))))
+
+; función utilizada para construir una sola generacion, utilizando la función construir-vecindarios-2d donde le pasamos una lista inicial y el
+; indice x e y, y a partir de la siguiente, a la cual le pasamos el listado de vecindarios de 3 bits y una regla binaria construimos una sola generación
+(defun construir-generacion-2d (regla lista)
+  (if (null lista)
+    nil
+    (cons (obtener-estado-vecindario-2d regla (car lista)) (construir-generacion-2d regla (cdr lista)))))
+
+; función utilizada para construir el automata celular bidimensional, a partir de la lista inicial, la regla binaria y el número de pasos
+; realizamos la ejecución pero solo se mostrarán secuencias de 0s y 1s en matrices de 3 x 3.
+(defun ev_auto-2d (lista regla pasos)
+  (if (> pasos 0)
+      (let* ((dimensiones (tam-tablero (obtener-tams-tablero lista 1)))
+              (ancho (car dimensiones))
+              (nueva-generacion (construir-generacion-2d regla (construir-vecindarios-2d lista 0 0))))      
+        (cons (dividir-lista-recursivo nueva-generacion ancho) 
+        (ev_auto-2d nueva-generacion regla (1- pasos))))
+    nil))
+
+; fución utilizada para mostrar el autómata celular bidimensional pero intercambiando los 0s y 1s por _ y @.
+(defun mostrar-automata-2d (matriz)
+  (mapcar (lambda (fila)
+    (mapcar (lambda (columna)
+      (mapcar (lambda (x)
+        (if (equal x 1)
+          '@ '_))
+      columna)) 
+    fila)) 
+  matriz))
+; pasar a decimal el vecindario y a partir de ahi saber que valor le pertenece dentro de la regla
+
+; (print (make-sequence 'list 10 :initial-element 0))
+;(append (convertir-num-binario (car (list (floor num 2)))) (list (- num (* 2 (floor num 2)))))
+;(defun cociente_resto (numero1 numero2)
+; utilizar para cada vecindario de 3 bits pasarlo a decimal y hacerle el nth con la lista (conversada - reverse) 
+; de la regla 
+;  (list (floor numero1 numero2)
+;	(- numero1 (* numero2 (floor numero1 numero2)))))
+; automata celular bidimensional - el juego de la vida - matrices, necesito 2^9  512 reglas para construir un
+; automata celular bidimensional, los vecinos son areas de 3*3, y en caso de que los vecinos queden fuera de la
+; matriz se debe completar con el resto de vecinos de otras puntas 
+; let para crear variables locales
+; let lleva una lista de variables -> (let* ((var_1 (+ 1 (* 2 (nth 1 l))))
+;                                           (var_2 (+ (car l) (cadr l))
+;                                           (var_3 (+ var_1 var_2)))
+;                                    ) <- parentesis de asignaciones
+;                                   (+ (otra-funcion (var_1 var_2 var_3) 2)))
+; let se ejecuta en paralelo, para eso se introduce el *
+
+
+; esta función cuenta las células vivas que hay en una lista, es decir, cuenta el número de 1 que se encuentra, ya que, una celula viva representa un 1 y una muerta un 0.
+(defun obtener-valores-vecindario (vecindario)
+  (if (null vecindario)
+    0
+    (let ((siguiente (obtener-valores-vecindario (cdr vecindario))))
+    (if (equal (car vecindario) 1)
+      (1+ siguiente)
+      siguiente))))
+
+(defun aplanar-lista-recursivo (lista)
+(if (null lista)
+  nil
+  (if (atom (car lista))
+    (cons (car lista) (aplanar-lista-recursivo (cdr lista)))
+    (append (aplanar-lista-recursivo (car lista)) (aplanar-lista-recursivo (cdr lista))))))
+
+; esta función llama a la función cuenta el número de células vivas y como lista se pasa la lista pero ya aplanada, debido a que trabajamos con matrices y en mi caso, es más sencillo
+; aplanar la lista para luego realizar el conteo de las células.
+(defun obtener-valores-vecindario-2d (vecindario)
+  (obtener-valores-vecindario (aplanar-lista-recursivo vecindario)))
+
+; esta función ayuda a calcular el siguiente estado de una célula según las reglas, las cuales son:
+  ; - si una célula muerta tiene exactamente 3 células vivas "nace"
+  ; - una célula viva se mantiene si tiene 2 o 3 vecinos a su alrededor
+; por lo que dado un vecindario de 3x3 la función calculará el siguiente estado de esa célula.
+; para comprobar cuantas células vivas tiene ese vecindario utilizamos la función obtener-valores-vecindario-2d para obtener cuantas células vivas tiene alrededor menos ella misma
+; según cada caso esta función decidirá si esa célula segurirá viviendo o morirá.
+(defun obtener-estado (pos vecindario)
+  (let ((comprobar-vivos (- (obtener-valores-vecindario-2d vecindario) pos)))
+    (if (equal pos 1)
+      (if (or (equal comprobar-vivos 2) (equal comprobar-vivos 3))
+        1
+        0)
+      (if (equal comprobar-vivos 3) 
+        1
+        0))))
+
+; esta función es utilizada para construir todas las filas de la nueva generación. Para la condición de parada, si no hay más filas, termina.
+; construye una fila completa y para las siguientes filas las construye de forma recursiva
+(defun construir-fila (matriz y)
+  (if (>= y (length matriz))
+    nil
+    (cons (construir-columna matriz y 0) (construir-fila matriz (1+ y)))))
+
+; esta función construye una fila céluca a célula, en primer lugar, para cada posición (x, y) construye una vecindario 3x3 mediante la función construir-celdas-acb,
+; de esta forma el algoritmo realiza un comportamiento toroidal. Es por ello, que obtiene el nuevo estado de la célula calculada y lo añade a la fila
+(defun construir-columna (matriz y x)
+  (if (>= x (length (car matriz)))
+    nil
+    (cons (obtener-estado (nth x (nth y matriz)) (construir-celdas-acb matriz x y)) (construir-columna matriz y (1+ x)))))
+
+
+; función utilizada para calcular el módulo
+(defun modulo (n1 n2)
+  (let ((resultado (- n1 (* n2 (floor n1 n2)))))
+    (if (< resultado 0)
+      (+ resultado n2)
+        resultado)))
 
 ; utilizamos esta función para obtener cada posición de los vecindario 3 x 3 de la lista, el cálculo de los vecindarios es:
 ; c(0, 0) -> x - 1, y - 1   c(0, 1) -> x, y - 1   c(0, 2) -> x + 1, y - 1
@@ -587,55 +841,47 @@
       (nth (modulo (1+ x) (length lista)) (nth (modulo (1+ y) (length lista)) lista)))
   ))
 
-; función utilizada para calcular el módulo
-(defun modulo (n1 n2)
-  (- n1 (* n2 (floor n1 n2))))
 
-; función utilizada para dividir una función en tres sublistas, es decir, una matriz 3 x 3
-(defun dividir-lista-recurisivo (lista)
-  (if (null lista)
-    nil
-    (if (atom (car lista))
-      (cons (list (car lista) (cadr lista) (caddr lista)) (dividir-lista-recurisivo (cdr (cdr (cdr lista)))))
-      nil)))
+; esta función es la utilizada para generar una nueva matriz completa desde la posición inicial.
+(defun construir-nueva-generacion (matriz)
+  (construir-fila matriz 0))
 
-; función utilizada para construir una sola generacion, utilizando la función construir-vecindarios-2d donde le pasamos una lista inicial y el
-; indice x e y, y a partir de la siguiente, a la cual le pasamos el listado de vecindarios de 3 bits y una regla binaria construimos una sola generación
-(defun construir-generacion-2d (regla lista)
-  (if (null lista)
-    nil
-    (cons (obtener-estado-vecindario-2d regla (car lista)) (construir-generacion-2d regla (cdr lista)))))
-
-; función utilizada para construir el automata celular bidimensional, a partir de la lista inicial, la regla binaria y el número de pasos
-; realizamos la ejecución pero solo se mostrarán secuencias de 0s y 1s en matrices de 3 x 3.
-(defun ev_auto-2d (lista regla pasos)
-  (if (> pasos 0)
-    (cons (dividir-lista-recurisivo (construir-generacion-2d regla (construir-vecindarios-2d lista 0 0))) 
-    (ev_auto-2d (construir-generacion-2d regla (construir-vecindarios-2d lista 0 0)) regla (1- pasos)))
-    nil))
-
-; fución utilizada para mostrar el autómata celular bidimensional pero intercambiando los 0s y 1s por _ y @.
-(defun mostrar-automata-2d (matriz)
+; esta función es la utilizad para realizar la conversión de los 1 y 0 dentro de la matriz
+(defun construir-juego-vida (matriz)
   (mapcar (lambda (fila)
-    (mapcar (lambda (columna)
-      (mapcar (lambda (x)
+    (print (mapcar (lambda (x)
         (if (equal x 1)
           '@ '_))
-      columna)) 
-    fila)) 
+      fila)))
   matriz))
-; pasar a decimal el vecindario y a partir de ahi saber que valor le pertenece dentro de la regla
 
-; (print (make-sequence 'list 10 :initial-element 0))
-;(append (convertir-num-binario (car (list (floor num 2)))) (list (- num (* 2 (floor num 2)))))
-;(defun cociente_resto (numero1 numero2)
-; utilizar para cada vecindario de 3 bits pasarlo a decimal y hacerle el nth con la lista (conversada - reverse) 
-; de la regla 
-;  (list (floor numero1 numero2)
-;	(- numero1 (* numero2 (floor numero1 numero2)))))
-; automata celular bidimensional - el juego de la vida - matrices, necesito 2^9  512 reglas para construir un
-; automata celular bidimensional, los vecinos son areas de 3*3, y en caso de que los vecinos queden fuera de la
-; matriz se debe completar con el resto de vecinos de otras puntas 
+; esta función es la utilizada para mostrar el video durante el número de pasos que se haya introducido, en cada iteración construye la matriz, espera, genera la nueva generación y repite
+; así hasta completa el número de pasos introducido
+(defun mostrar-video (matriz pasos)
+  (if (> pasos 0)
+    (let ((construir (construir-juego-vida matriz))
+          (esperar (sleep 0.5))
+          (saltar (terpri)))
+      (mostrar-video (construir-nueva-generacion matriz) (1- pasos)))))
 
+(defun error-fitness (arbol punto)
+  (if (null arbol)
+    nil
+    (if (equal (car arbol) 'x)
+      (error-fitness-2 arbol)
+      (+ (eval arbol) (error-fitness (cdr arbol) punto))))) 
 
+(defun sustituir-punto (arbol punto)
+  (mapcar (lambda (x)
+    (if (equal x 'x)
+      (subst 'x punto arbol)
+      x))
+  arbol))
+
+  (defun sustituir-x (arbol punto)
+    (eval (subst punto 'x arbol)))
+
+  (defun evaluar-operacion (arbol punto)
+    (let ((x0 (sustituir-x arbol punto)))
+      (eval x0)))
 

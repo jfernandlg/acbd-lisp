@@ -452,6 +452,9 @@
       (cons (construir-celdas lista indice) (construir-vecindarios lista (1+ indice)))
       nil))
 
+(defun construir-vecindarios-sin-indice (lista)
+  (dividir_lista (construir-celdas-sin-indice lista)))
+
 ; función complementaria con la anterior, mediante el indice que se le pasa a la funcion anterior calculamos el indice anterior, central y posterior
 ; según la posición concreta de este para obtener cada vecindario.
 ; el calculo de los vecindarios es:
@@ -472,6 +475,10 @@
   (nth (- indice (* (length lista) (floor indice (length lista)))) lista)
   (nth (- (1+ indice) (* (length lista) (floor (1+ indice) (length lista)))) lista)))
 
+(defun construir-celdas-sin-indice (lista)
+  (mapcar (lambda (x) x) 
+    (append (last lista) lista (list (car lista)))))
+
 ; función utilizada para construir una sola generacion, utilizando la función construir-vecindarios donde le pasamos una lista inicial y un indice,
 ; a partir de la siguiente, a la cual le pasamos el listado de vecindarios de 3 bits y una regla binaria construimos una sola generación
 
@@ -486,6 +493,12 @@
 (defun ev_auto (lista regla pasos)
   (if (> pasos 0)
     (cons (construir-generacion regla (construir-vecindarios lista 0)) (ev_auto (construir-generacion regla (construir-vecindarios lista 0)) regla (1- pasos)))
+    nil))
+
+
+(defun ev_auto-sin-indice (lista regla pasos)
+  (if (> pasos 0)
+    (cons (construir-generacion regla (construir-vecindarios-sin-indice lista)) (ev_auto (construir-generacion regla (construir-vecindarios-sin-indice lista)) regla (1- pasos)))
     nil))
 
 ; subst '0 '_
@@ -823,7 +836,8 @@
 ; c(2, 0) -> x - 1, y + 1   c(2, 1) -> x, y + 1   c(2, 2) -> x + 1, y + 1
 
 ; a cada variable se le pasa el valor posicional y se realiza el módulo, posteriormente con el valor obtenido
-; se ejecuta con la función nth para obtener su fila y columna respectiva y obtener el valor de la celda 
+; se ejecuta con la función nth para obtener su fila y columna respectiva y obtener el valor de la celda
+
 
 (defun construir-celdas-acb (lista x y)
   (list
